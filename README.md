@@ -32,6 +32,9 @@ Image data acquired in microscopy are stored in various formats: TIF, LSM, CZI, 
 Visualization of 2D images can be performed using the matplotlib library. matplotlib will also be able to render isosurfaces in 2D.
 We'll use napari to visualize 3D data set using volume rendering.
 
+## Enhancement
+
+
 
 ## Automating analysis
 
