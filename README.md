@@ -34,10 +34,12 @@ We'll use napari to visualize 3D data set using volume rendering.
 
 ## Enhancement
 
+## Registration and displacement
+
+## Segmentation
 
 
-## Automating analysis
-
+## 5. Creating automated workflow
 
 
 
