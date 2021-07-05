@@ -1,4 +1,4 @@
-# Processing of microscopy images in python
+# Processing and analysis of microscopy images in python
 
 These material aims at gathering tips to analysis of microscopy images. We'll see how to define simple analysis workflow from the raw image to quantitative number.
 
@@ -32,9 +32,18 @@ Image data acquired in microscopy are stored in various formats: TIF, LSM, CZI, 
 Visualization of 2D images can be performed using the matplotlib library. matplotlib will also be able to render isosurfaces in 2D.
 We'll use napari to visualize 3D data set using volume rendering.
 
+## Colocalization
+- manders
+- pearson
+
 ## Enhancement
+- smoothing
+- rollingball
 
 ## Registration and displacement
+- drift correction using phase correlation
+- landmark registration
+- 
 
 ## Segmentation
 

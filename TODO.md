@@ -1,27 +1,37 @@
 ## I/O
-- TIF
-- ND2
-- CZI
-- LIF
-- HDF5
-- ZARR
+- TIF [done]
+- ND2 [done]
+- CZI [done]
+- LIF [done]
+- HDF5 / Imaris [done]
+- ZARR / N5 [done]
 
 ## Visualization
-- matplotlib
-- napari
+- matplotlib [done]
+- napari [done]
+
+## Enhancement
+- denoising (gaussian blur, median filter)
+- rolling ball [done]
+
+## Deconvolution
+- Wiener
+- Richardson-Lucy
+
+## Detection
+- Spot detection
 
 ## Colocalization
-- manders
-- pair correlation function
-- pearson
+- correlation (pearson and spearman) [done]
+- co-occurance (manders, GCOPS) [done]
+- pair correlation function [done]
   
-## Enhancement
-- 
 
+  
 ## Registration and displacement
 - drift correction using phase correlation [started]
 - landmark registration
-- 
+
 
 ## Segmentation
 - watershed segmentation [done]
