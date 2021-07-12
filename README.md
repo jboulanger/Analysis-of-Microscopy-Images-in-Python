@@ -17,6 +17,7 @@ These steps are for illustrative purpose only and aimed at people not familiar w
         Let's add support for Jupyter kernel
         ```
         conda install ipykernel
+	python -m ipykernel install --user --name imageanalysis
         ```
 		Later add one by one the needed packages
   - We can also create the environement with all the necessary module using ```conda env create -f environment.yml```.  Note that to export the current environement to an yml file use: ```conda env export > environment.yml```
