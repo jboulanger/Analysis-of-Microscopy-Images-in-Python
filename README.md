@@ -3,10 +3,10 @@
 These material aims at gathering tips to analysis of microscopy images. We'll see how to define simple analysis workflow from the raw image to quantitative number.
 
 ## Installation & setup
-These steps are for illustrative purpose only and aimed at people not familiar with coding in python. For python, we can use a minimal version of miniconda which is a package manager for precompiled modules. For editing text, we use for example visual studio code.
+These steps are for illustrative purpose only and aimed at people not familiar with coding in python. For python, we can use a minimal version of miniconda which is a package manager for precompiled modules. For editing text, we use visual studio code.
 
 - Install visual studio code https://code.visualstudio.com/download
-- Activate python extensions
+- Activate python extensions in visual code ([])
 - Install miniconda3 https://docs.conda.io/en/latest/miniconda.html
 - Create an environement
 	1. Install modules manually one by one (see notebooks) and install needed packages one by one. In the miniconda3 prompt or in visual code, opening a command prompt:
