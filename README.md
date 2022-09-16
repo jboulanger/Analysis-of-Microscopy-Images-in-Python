@@ -1,9 +1,12 @@
 
 
 # Processing and analysis of microscopy images in python
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/jboulanger/Analysis-of-Microscopy-Images-in-Python/HEAD)
 
-These material aims at gathering tips to analysis of microscopy images. We'll see how to define simple analysis workflow from the raw image to quantitative number.
+These material aims at gathering tips to analysis of microscopy images. We'll
+see how to define simple analysis workflow from the raw image to quantitative number.
+
+You can lunch the notebooks in binder [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/jboulanger/Analysis-of-Microscopy-Images-in-Python/HEAD) and start interacting with the code without installing anything on your computer.
+
 
 ## Installation & setup
 These steps are for illustrative purpose only and aimed at people not familiar with coding in python. For python, we can use a minimal version of miniconda which is a package manager for precompiled modules. For editing text, we use visual studio code.
@@ -28,7 +31,8 @@ These steps are for illustrative purpose only and aimed at people not familiar w
         ```
 	Note that to export the current environment to an yml file use: ```conda env export > environment.yml```
 
-- Download the code using git or [here](https://github.com/jboulanger/Analysis-of-Microscopy-Images-in-Python/archive/refs/heads/main.zip)
+- Download the code using git or directly [here](https://github.com/jboulanger/Analysis-of-Microscopy-Images-in-Python/archive/refs/heads/main.zip)
+
 - We can run the examples in a jupyter notebook in the browser as well. Open the anaconda prompt, go to the directory where the notebooks are saved by typing  ```cd path_to_the_folder```  and then launch the notebook with ```jupyter notebook``` .
 
 ## Content
