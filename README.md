@@ -5,6 +5,9 @@
 These material aims at gathering tips to analysis of microscopy images. We'll
 see how to define simple analysis workflow from the raw image to quantitative number.
 
+The objective is not to learn computer science, programing or even the python
+language but to be able to create workflows to analyse microscopy data.
+
 You can lunch the notebooks in binder [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/jboulanger/Analysis-of-Microscopy-Images-in-Python/HEAD) and start interacting with the code without installing anything on your computer.
 
 
@@ -37,7 +40,14 @@ These steps are for illustrative purpose only and aimed at people not familiar w
 
 ## Content
 The notebooks in the example folder try to cover various aspects of image analysis encountered in optical/fluorescence microsopy.
+
+- Basic python concepts
+- Packages and environments
 - Opening images with various microscopy formats
-- Visualization
+- Visualization of multi-dimensional datasets
 - Image enhancement
--
+- Deconvolution
+- Segmentation (cells, nucleis, membranes)
+- Motion estimation
+- Tracking
+- Statistical analysis

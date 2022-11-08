@@ -5,6 +5,7 @@
 - LIF [done]
 - HDF5 / Imaris [done]
 - ZARR / N5 [done]
+-
 
 ## Visualization
 - matplotlib [done]
@@ -25,9 +26,7 @@
 - correlation (pearson and spearman) [done]
 - co-occurance (manders, GCOPS) [done]
 - pair correlation function [done]
-  
 
-  
 ## Registration and displacement
 - drift correction using phase correlation [started]
 - landmark registration
@@ -35,7 +34,5 @@
 
 ## Segmentation
 - watershed segmentation [done]
-- 
-
 
 ## Creating workflow
