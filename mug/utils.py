@@ -1,6 +1,22 @@
 import scipy.ndimage
 import numpy as np
 
+
+def download_and_unzip(url, extract_to='.'):
+    """Download and unzip an zip file
+    Parameters
+    ----------
+    url : the location of the zip file
+    extact_to : path where to extract the zip file
+    """
+    from urllib.request import urlopen
+    from io import BytesIO
+    from zipfile import ZipFile
+    http_response = urlopen(url)
+    zipfile = ZipFile(BytesIO(http_response.read()))
+    zipfile.extractall(path=extract_to)
+
+
 def train_network(model,optimizer,loss_fn,train_dl,valid_dl,epochs=100,device='cpu',scheduler=None):
     """Training loops"""
     history = {

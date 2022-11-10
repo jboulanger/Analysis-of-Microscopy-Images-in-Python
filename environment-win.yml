@@ -1,20 +1,20 @@
 name: imaging
 channels:
   - pytorch
+  - nvidia
   - conda-forge
   - defaults
 dependencies:
-  - ipython
-  - ipykernel
-  - pip
+  - python=3.9  
+  - ipykernel  
   - matplotlib
   - pandas
-  - scikit-image
   - seaborn
+  - scikit-image
   - conda-forge::dask
   - conda-forge::dask-jobqueue
-  - pytorch::pytorch
-  - pytorch::torchvision
-  - conda-forge::cudatoolkit
+  - pytorch
+  - torchvision
+  - pytorch-cuda=11.6
   - pip:
     - bm3d

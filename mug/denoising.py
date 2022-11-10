@@ -6,17 +6,22 @@ from torch.utils.data import Dataset
 from torchvision import io
 import random
 
-import utils
+from . import utils
 
-def benchmark(method, imgpath, noise_levels=range(4,40,2)):
+def benchmark(method, imgpath, blind=False, noise_levels=range(4,40,2)):
     """Denoising benchmark
+    Parameters
+    ----------
     method  : denoising methof lambda x,sigma: return denoised image
     imgpath : path to the images to denoise
-    return : a dataframe with the results
+    Returns
+    -------
+    a dataframe with the metrics
     """
     import pathlib
     import pandas as pd
-    from skimage import io as skio
+    from skimage import io as skio    
+    from skimage import metrics
     import time
     results = []
     for fname in sorted(glob.glob(imgpath)):
@@ -24,12 +29,16 @@ def benchmark(method, imgpath, noise_levels=range(4,40,2)):
         for noise_std in noise_levels:
             noisy = img + np.random.normal(0, noise_std, img.shape)
             t0 = time.perf_counter()
-            denoised = method(noisy, noise_std)
+            if blind:                
+                denoised = method(noisy)
+            else:
+                denoised = method(noisy, noise_std)
             t1 = time.perf_counter()
             results.append({
-                'noise level': noise_std,
+                'noise level': noise_std,   
                 'image name': pathlib.Path(fname).stem,
-                'psnr': utils.psnr(denoised, img),
+                'psnr': metrics.peak_signal_noise_ratio(img, denoised, data_range=255),
+                'ssim': metrics.structural_similarity(img, denoised),
                 'time': t1 - t0
             })
     return pd.DataFrame.from_records(results)
@@ -57,6 +66,7 @@ class DnCNN(nn.Module):
     def forward(self,x):
         return self.net(x)
 
+
 class DnCNNDataset(Dataset):
     """DnCNN dataset loading images in a folder"""
     def __init__(self, path, transform=None):
@@ -71,6 +81,7 @@ class DnCNNDataset(Dataset):
     def __getitem__(self, idx):
         image = self.imagelist[idx]
         return self.transform(image)
+
 
 class DnCNNAugmenter(object):
     """Crop, flip, add noise and return a noisy and residual image"""
@@ -109,9 +120,30 @@ class DnCNNAugmenter(object):
 
 
 class DnCNNDenoiser():
-    def __init__(self, model):
+    """DnCNN denoiser 
+    Load a trained model and apply it to images
+    """
+    def __init__(self, model, device='cpu'):
+        """Initialize the denoiser with a model
+        Parameters
+        ----------
+        model : the pretrained model
+        """
         self.model = model
-
-    def _call__(self, x):
-        return x - self.model(torch.from_numpy(x).float().reshape([1,1,*x.shape]).to(device)).detach().cpu().numpy().squeeze()
+        self.device = device
+    
+    def __call__(self, x):        
+        """Apply the denoiser to a 2D numpy array
+        Parameters
+        ----------
+        x : a noisy image as a numpy array
+        Returns
+        -------
+        the denoised input
+        """
+        with torch.no_grad():
+            input = torch.from_numpy(x).float().reshape([1,1,*x.shape]).to(self.device)
+            residuals = self.model(input).cpu().numpy().reshape(x.shape)            
+            return x - residuals
+    
 
