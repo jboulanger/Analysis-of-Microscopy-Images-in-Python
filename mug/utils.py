@@ -1,6 +1,40 @@
 import scipy.ndimage
 import numpy as np
 
+def train_network(model,optimizer,loss_fn,train_dl,valid_dl,epochs=100,device='cpu',scheduler=None):
+    """Training loops"""
+    history = {
+        'train_loss':[], 'train_epoch':[],
+        'valid_loss':[], 'valid_epoch':[]
+    }
+    for epoch in range(epochs):
+        model.train()
+        train_loss = 0
+        for batch in train_dl:
+            loss = loss_fn(model(batch[0].to(device)), batch[1].to(device))
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+            train_loss += loss.data.item()
+            loss.detach()
+        history['train_loss'].append(train_loss)
+        history['train_epoch'].append(epoch)
+        if epoch%10 == 0:
+            model.eval()
+            valid_loss = 0
+            for batch in valid_dl:
+                valid_loss += loss_fn(model(batch[0].to(device)), batch[1].to(device)).detach().item()
+            history['valid_loss'].append(valid_loss)
+            history['valid_epoch'].append(epoch)
+        if scheduler is not None:
+            scheduler.step()
+    return history
+
+def psnr(x, y, vmax = 255):
+    """Peak signal to noise ratio quality metric"""
+    import math
+    return 10 * math.log10(vmax * vmax / np.mean(np.square(x - y)))
+
 def generate_wavy_circle_contour(x0,y0,radius,amplitude,smoothness,length):
     """Generate a awvy circle contour
 

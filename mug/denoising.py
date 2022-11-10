@@ -1,11 +1,38 @@
 import glob
+import numpy as np
 import torch
 import torch.nn as nn
-from torch import optim
-from torch.utils.data import Dataset, DataLoader
-from torchvision import transforms,datasets,io
+from torch.utils.data import Dataset
+from torchvision import io
 import random
-import matplotlib.pyplot as plt
+
+import utils
+
+def benchmark(method, imgpath, noise_levels=range(4,40,2)):
+    """Denoising benchmark
+    method  : denoising methof lambda x,sigma: return denoised image
+    imgpath : path to the images to denoise
+    return : a dataframe with the results
+    """
+    import pathlib
+    import pandas as pd
+    from skimage import io as skio
+    import time
+    results = []
+    for fname in sorted(glob.glob(imgpath)):
+        img = skio.imread(fname).astype(float)
+        for noise_std in noise_levels:
+            noisy = img + np.random.normal(0, noise_std, img.shape)
+            t0 = time.perf_counter()
+            denoised = method(noisy, noise_std)
+            t1 = time.perf_counter()
+            results.append({
+                'noise level': noise_std,
+                'image name': pathlib.Path(fname).stem,
+                'psnr': utils.psnr(denoised, img),
+                'time': t1 - t0
+            })
+    return pd.DataFrame.from_records(results)
 
 class DnCNN(nn.Module):
     """DnCNN denoising network
@@ -50,7 +77,9 @@ class DnCNNAugmenter(object):
     def __init__(self, shape, noise_level):
         """Initialize the transform with shape and noise level
         shape : [H,W] dimension of the crop
-        noise : noise level on which to train DnCNN
+        noise : noise level on which to train DnCNN, if noise is an interval
+                [a,b] then the network will be able to denoise various noise
+                levels.
         """
         self.shape = shape
         self.noise_level = noise_level
@@ -70,6 +99,19 @@ class DnCNNAugmenter(object):
         # reshape to tensor
         img = img.reshape([1,*self.shape])
         # add noise
-        residuals = self.noise_level * torch.randn(img.shape)
+        if isinstance(self.noise_level,tuple) or isinstance(self.noise_level,list):
+            noise_std = random.uniform(*self.noise_level)
+            residuals = noise_std * torch.randn(img.shape)
+        else:
+            residuals = self.noise_level * torch.randn(img.shape)
         noisy = img + residuals
         return noisy, residuals
+
+
+class DnCNNDenoiser():
+    def __init__(self, model):
+        self.model = model
+
+    def _call__(self, x):
+        return x - self.model(torch.from_numpy(x).float().reshape([1,1,*x.shape]).to(device)).detach().cpu().numpy().squeeze()
+
