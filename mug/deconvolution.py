@@ -2,13 +2,16 @@ import math
 import numpy as np
 import torch
 
+
+
+
 def generate_otf3d_grid(shape, pixel_size):
     """
     Generate a grid on which to evaluate the optical transfer function
     Parameters
     ----------
     shape : list [nx,ny,nz] giving the shape of the final array
-    pixel_size : sampling in [x,y,z]    
+    pixel_size : sampling in [x,y,z]
     Returns
     -------
     kx,ky,kz,z: frequency grid in x and y and spatial space in z
@@ -62,7 +65,7 @@ def generate_otf3d(shape,pixel_size,wavelength,NA,medium_refractive_index):
     return generate_otf3d_on_grid(grid,NA,wavelength,medium_refractive_index)
 
 def deconvolve_richardson_lucy(data, otf, background=0, iterations=100):
-    """ 
+    """
     Deconvolve data according to the given otf using a Richardson-Lucy algorithm
     Parameters
     ----------
@@ -86,7 +89,7 @@ def deconvolve_richardson_lucy(data, otf, background=0, iterations=100):
 
 
 def deconvolve_richardson_lucy_heavy_ball(data, otf, background, iterations):
-    """ 
+    """
     Deconvolve data according to the given otf using a scaled heavy ball Richardson-Lucy algorithm
     Parameters
     ----------
@@ -116,8 +119,8 @@ def deconvolve_richardson_lucy_heavy_ball(data, otf, background, iterations):
     return estimate, dkl
 
 def deconvolve_richardson_lucy_heavy_ball_torch(data, otf, background, iterations, device):
-    """ 
-    Deconvolve data according to the given otf using a scaled heavy ball Richardson-Lucy algorithm 
+    """
+    Deconvolve data according to the given otf using a scaled heavy ball Richardson-Lucy algorithm
     Parameters
     ----------
     data       : torch tensor
