@@ -8,7 +8,7 @@ import random
 
 from . import utils
 
-def benchmark(method, imgpath, blind=False, noise_levels=range(4,40,2)):
+def benchmark(method, imgpath, blind=False, noise_levels=range(5,30,5)):
     """Denoising benchmark
     Parameters
     ----------
@@ -20,7 +20,7 @@ def benchmark(method, imgpath, blind=False, noise_levels=range(4,40,2)):
     """
     import pathlib
     import pandas as pd
-    from skimage import io as skio    
+    from skimage import io as skio
     from skimage import metrics
     import time
     results = []
@@ -29,19 +29,33 @@ def benchmark(method, imgpath, blind=False, noise_levels=range(4,40,2)):
         for noise_std in noise_levels:
             noisy = img + np.random.normal(0, noise_std, img.shape)
             t0 = time.perf_counter()
-            if blind:                
+            if blind:
                 denoised = method(noisy)
             else:
                 denoised = method(noisy, noise_std)
             t1 = time.perf_counter()
             results.append({
-                'noise level': noise_std,   
+                'noise level': noise_std,
                 'image name': pathlib.Path(fname).stem,
                 'psnr': metrics.peak_signal_noise_ratio(img, denoised, data_range=255),
                 'ssim': metrics.structural_similarity(img, denoised),
                 'time': t1 - t0
             })
     return pd.DataFrame.from_records(results)
+
+
+class generalized_anscombe_transform():
+    def __init__(self, gain, offset, noise_std):
+        self.g0 = gain
+        self.edc = sigma**2 - gain * offset
+
+    def __call__(self, x):
+        b = 3. / 8.* self.g0 ** 2 + self.edc
+        return 2. / self.g0 * np.sqrt(self.gain * x + b)
+
+    def inverse(self, x):
+        b = 3. / 8.* self.g0 ** 2 + self.edc
+        return 0.25 * self.g0 * x**2  - b / self.g0
 
 class DnCNN(nn.Module):
     """DnCNN denoising network
@@ -120,7 +134,7 @@ class DnCNNAugmenter(object):
 
 
 class DnCNNDenoiser():
-    """DnCNN denoiser 
+    """DnCNN denoiser
     Load a trained model and apply it to images
     """
     def __init__(self, model, device='cpu'):
@@ -131,8 +145,8 @@ class DnCNNDenoiser():
         """
         self.model = model
         self.device = device
-    
-    def __call__(self, x):        
+
+    def __call__(self, x):
         """Apply the denoiser to a 2D numpy array
         Parameters
         ----------
@@ -143,7 +157,7 @@ class DnCNNDenoiser():
         """
         with torch.no_grad():
             input = torch.from_numpy(x).float().reshape([1,1,*x.shape]).to(self.device)
-            residuals = self.model(input).cpu().numpy().reshape(x.shape)            
+            residuals = self.model(input).cpu().numpy().reshape(x.shape)
             return x - residuals
-    
+
 

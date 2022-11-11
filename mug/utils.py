@@ -1,6 +1,6 @@
 import scipy.ndimage
 import numpy as np
-
+import matplotlib.pyplot as plt
 
 def download_and_unzip(url, extract_to='.'):
     """Download and unzip an zip file
@@ -16,6 +16,31 @@ def download_and_unzip(url, extract_to='.'):
     zipfile = ZipFile(BytesIO(http_response.read()))
     zipfile.extractall(path=extract_to)
 
+def show_image_list(images, titles):
+    """Display an image list with titles and no axes"""
+    _, ax = plt.subplots(1,len(images))
+    for k in range(len(images)):
+        ax[k].imshow(images[k])
+        ax[k].axis('off')
+        ax[k].set_title(titles[k])
+
+def mip3d(image):
+    """Compute 3 maximum intensity projection and make a montage
+    Parameters
+    ----------
+    image : image (3d)
+    Results
+    -------
+    a mip as 2d image
+    """
+    xy = np.amax(image,0).squeeze()
+    yz = np.amax(image,1).squeeze().transpose()
+    xz = np.amax(image,2).squeeze()
+    zz = np.zeros([image.shape[0],image.shape[0]])
+    return np.concatenate(
+        (np.concatenate((xy,xz),0), np.concatenate((yz,zz),0)),
+        1
+    )
 
 def train_network(model,optimizer,loss_fn,train_dl,valid_dl,epochs=100,device='cpu',scheduler=None):
     """Training loops"""
@@ -117,6 +142,9 @@ def generate_test_image(shape,N=10,L=100,smooth=10):
         img = img + np.exp(-0.5*np.sum(np.stack([np.square(p[k]-X[k]) for k in range(D)]), axis=0))
     img = img / img.max()
     return img
+
+
+
 
 def estimate_awgn_std(data:np.array):
     """
