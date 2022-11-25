@@ -10,6 +10,7 @@ dependencies:
   - matplotlib
   - pandas
   - scikit-image
+  - scikit-learn
   - seaborn
   - conda-forge::dask
   - conda-forge::dask-jobqueue
@@ -18,3 +19,4 @@ dependencies:
   - conda-forge::cudatoolkit
   - pip:
     - bm3d
+    - napari[all]

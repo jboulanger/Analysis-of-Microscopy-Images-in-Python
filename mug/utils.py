@@ -1,6 +1,7 @@
 import scipy.ndimage
 import numpy as np
 import matplotlib.pyplot as plt
+import math
 
 def download_and_unzip(url, extract_to='.'):
     """Download and unzip an zip file
@@ -16,6 +17,7 @@ def download_and_unzip(url, extract_to='.'):
     zipfile = ZipFile(BytesIO(http_response.read()))
     zipfile.extractall(path=extract_to)
 
+
 def show_image_list(images, titles):
     """Display an image list with titles and no axes"""
     _, ax = plt.subplots(1,len(images))
@@ -24,6 +26,7 @@ def show_image_list(images, titles):
         ax[k].axis('off')
         ax[k].set_title(titles[k])
 
+
 def mip3d(image):
     """Compute 3 maximum intensity projection and make a montage
     Parameters
@@ -31,7 +34,7 @@ def mip3d(image):
     image : image (3d)
     Results
     -------
-    a mip as 2d image
+    a all projections arranged in as a single 2d image
     """
     xy = np.amax(image,0).squeeze()
     yz = np.amax(image,1).squeeze().transpose()
@@ -41,6 +44,42 @@ def mip3d(image):
         (np.concatenate((xy,xz),0), np.concatenate((yz,zz),0)),
         1
     )
+
+
+def slice3d(image):
+    """Compute a slice of 3D image
+    Parameters
+    ----------
+    image : image (3d)
+    Results
+    -------
+    all slices arranged in a single 2d image
+    """
+    xy = image[image.shape[0]//2,:,:].squeeze()
+    yz = image[:,image.shape[1]//2,:].squeeze().transpose()
+    xz = image[:,:,image.shape[2]//2].squeeze()
+    zz = np.zeros([image.shape[0],image.shape[0]])
+    return np.concatenate(
+        (np.concatenate((xy,xz),0), np.concatenate((yz,zz),0)),
+        1
+    )
+
+
+def power_spectrum_density(x, applylog=True):
+    """Compute the power spectrum density of the input
+    Parameters
+    ----------
+    x : signal/image
+    Returns
+    -------
+    the power spectrum
+    """
+    psd = np.fft.fftshift(np.abs(np.fft.fftn(x)))
+    if applylog:
+        return np.log(1e-6 + psd)
+    else:
+        return psd
+
 
 def train_network(model,optimizer,loss_fn,train_dl,valid_dl,epochs=100,device='cpu',scheduler=None):
     """Training loops"""
@@ -71,10 +110,12 @@ def train_network(model,optimizer,loss_fn,train_dl,valid_dl,epochs=100,device='c
             scheduler.step()
     return history
 
+
 def psnr(x, y, vmax = 255):
     """Peak signal to noise ratio quality metric"""
     import math
     return 10 * math.log10(vmax * vmax / np.mean(np.square(x - y)))
+
 
 def generate_wavy_circle_contour(x0,y0,radius,amplitude,smoothness,length):
     """Generate a awvy circle contour
@@ -93,6 +134,7 @@ def generate_wavy_circle_contour(x0,y0,radius,amplitude,smoothness,length):
     s = s + amplitude * rng.normal(0,0.1,size=(length,1)) * circle
     s = np.fft.ifftn(f*np.fft.fftn(s))
     return np.real(s),np.imag(s)
+
 
 def generate_nuclei2D_image(shape):
     from skimage.filters import gaussian
@@ -142,8 +184,6 @@ def generate_test_image(shape,N=10,L=100,smooth=10):
         img = img + np.exp(-0.5*np.sum(np.stack([np.square(p[k]-X[k]) for k in range(D)]), axis=0))
     img = img / img.max()
     return img
-
-
 
 
 def estimate_awgn_std(data:np.array):

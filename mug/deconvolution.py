@@ -2,7 +2,6 @@ import math
 import numpy as np
 
 
-
 class otf_generator():
     """Scalar optical transfer function generator for wide-field microscopes
 
@@ -62,7 +61,14 @@ class otf_generator():
         ]
 
     def __call__(self, aberrations=None):
-
+        """
+        Parameters
+        ----------
+        aberrations : the sequence of aberrations
+        Returns
+        -------
+        The otf and the psf
+        """
         W = self.defocus
         if aberrations is not None:
             for k, a in enumerate(aberrations):
@@ -75,7 +81,7 @@ class otf_generator():
         )
         psf = psf / psf.sum()
         otf = np.fft.fftn(psf)
-        otf[otf<1e-6] = 0
+        otf[np.abs(otf) < 1e-6] = 0
         return otf, psf
 
 
@@ -91,6 +97,35 @@ def blur(img: np.ndarray, otf: np.ndarray) -> np.ndarray:
     """
     return np.real(np.fft.ifftn(otf * np.fft.fftn(img)))
 
+def deconvolve_gold_meinel(data, otf, background=0, iterations=100, acceleration=1.3, smooth=0):
+    """Deconvolve data according to the given otf using a Gold-Meinel
+    algorithm
+    Parameters
+    ----------
+    data         : numpy array
+    otf          : numpy array of the same size than data
+    background   : background level
+    iterations   : number of iterations
+    acceleration : acceleration parameter
+    Returns
+    -------
+    estimate   : estimated image
+    dkl        : Kullback Leibler divergence
+
+    [1] R. Gold. Rapp. tech. ANL-6984. Argonne National Lab., Ill., 1964.
+
+    """
+    from scipy.ndimage import gaussian_filter
+    epsilon = 1e-6 # a little number
+    estimate = np.maximum(np.real(np.fft.ifftn(otf * np.fft.fftn(data - background))), epsilon)
+    dkl = np.zeros(iterations)
+    for k in range(iterations):
+        blurred = np.real(np.fft.ifftn(otf * np.fft.fftn(estimate + background)))
+        ratio = data / blurred
+        estimate = estimate * np.power(ratio, acceleration)
+        estimate = gaussian_filter(estimate, smooth)
+        dkl[k] = np.mean(blurred - data + data * np.log(np.maximum(ratio, epsilon)))
+    return estimate, dkl
 
 def deconvolve_richardson_lucy(data, otf, background=0, iterations=100):
     """Deconvolve data according to the given otf using a Richardson-Lucy
@@ -114,16 +149,18 @@ def deconvolve_richardson_lucy(data, otf, background=0, iterations=100):
         doi: 10.1086/111605.
 
     """
-    estimate = np.clip(np.real(np.fft.ifftn(otf * np.fft.fftn(data-background))), a_min=1e-6, a_max=None)
+    epsilon = 1e-6 # a little number
+    estimate = np.maximum(np.real(np.fft.ifftn(otf * np.fft.fftn(data-background))), epsilon)
     dkl = np.zeros(iterations)
     for k in range(iterations):
-        blurred = np.clip(np.real(np.fft.ifftn(otf * np.fft.fftn(estimate+background))), a_min=1e-6, a_max=None)
+        blurred = np.maximum(np.real(np.fft.ifftn(otf * np.fft.fftn(estimate+background))), epsilon)
         ratio = data / blurred
         estimate = estimate * np.real(np.fft.ifftn(otf * np.fft.fftn(ratio)))
+        estimate = np.maximum(estimate, epsilon)
         dkl[k] = np.mean(blurred - data + data * np.log(np.clip(ratio,a_min=1e-6,a_max=None)))
     return estimate, dkl
 
-def deconvolve_richardson_lucy_heavy_ball(data, otf, background, iterations):
+def deconvolve_richardson_lucy_heavy_ball(data, otf, background=0, iterations=100):
     """Deconvolve data according to the given otf using a scaled heavy ball
     Richardson-Lucy algorithm
 
@@ -151,7 +188,7 @@ def deconvolve_richardson_lucy_heavy_ball(data, otf, background, iterations):
     for k in range(iterations):
         beta = (k-1.0) / (k+2.0)
         prediction = estimate + beta * (estimate -  old_estimate)
-        blurred = np.clip(np.real(np.fft.ifftn(otf * np.fft.fftn(prediction + background))), a_min=1e-6, a_max=None)
+        blurred = np.maximum(np.real(np.fft.ifftn(otf * np.fft.fftn(prediction + background))),0)
         ratio = data / blurred
         gradient = 1.0 - np.real(np.fft.ifftn(otf * np.fft.fftn(ratio)))
         old_estimate = estimate
@@ -198,13 +235,85 @@ def deconvolve_dr(img, otf, snr, max_iter=5):
     return x
 
 
+def deconvolve_total_variation(
+        data:np.ndarray,
+        otf:np.ndarray,
+        background=0.,
+        pixel_size:np.ndarray = np.ones([3,1]),
+        regularization:float=0.5,
+        max_iter:int=100,
+        step_size:float=1,
+        beta:float=0.1) -> np.ndarray:
+    """Deconvolve the image with a total variation regularization
+    Parameters
+    ----------
+    data       : numpy array
+    otf        : numpy array of the same size than data
+    background : background as float or nd.array
+    Returns
+    -------
+    estimate   : estimated image
+    """
+    from scipy import ndimage
+    epsilon = 1e-6
+    alpha = np.array(pixel_size) / np.array(pixel_size).max()
+    estimate = np.maximum(np.real(np.fft.ifftn(otf * np.fft.fftn(data-background))), epsilon)
+    D = [np.array([0,-1,1]).reshape(s) for s in [[1,1,3],[1,3,1],[3,1,1]]]
+    D = [d*a for d,a in zip(D,alpha)]
+    Dstar = [np.array([-1,1,0]).reshape(s) for s in [[1,1,3],[1,3,1],[3,1,1]]]
+    Dstar = [d*a for d,a in zip(Dstar,alpha)]
+    Hstarf = np.real(np.fft.ifftn(np.conjugate(otf) * np.fft.fftn(data)))
+    HtH = np.conjugate(otf) * otf
+    for _ in range(max_iter):
+        G = [ndimage.convolve(estimate, d, mode='reflect') for d in D]
+        N = np.sqrt(sum([np.square(g) for g in G]) + beta)
+        curv = sum([ndimage.convolve(g/N,d) for g,d in zip(G,Dstar)])
+        veloc = np.real(np.fft.ifftn(HtH * np.fft.fftn(estimate))) - Hstarf - regularization * curv
+        veloc = veloc / veloc.max()
+        estimate = np.maximum(estimate - step_size * veloc, 0)
+    return estimate
 
 
-
-
-
-
-
+def deconvolve_richardson_lucy_total_variation(
+        data:np.ndarray,
+        otf:np.ndarray,
+        background=0.,
+        pixel_size:np.ndarray = np.ones([3,1]),
+        regularization:float=0.5,
+        max_iter:int=100,
+        beta:float=0.1) -> np.ndarray:
+    """Deconvolve the image with a total variation regularization
+    Parameters
+    ----------
+    data       : numpy array
+    otf        : numpy array of the same size than data
+    background : background as float or nd.array
+    pixel_size : pixel size used to scale the gradients
+    regularization : regularization parameter
+    max_iter   : number of iterations
+    beta       : beta parameter in the TV norm
+    Returns
+    -------
+    estimate   : estimated image
+    """
+    from scipy import ndimage
+    epsilon = 1e-6
+    alpha = np.array(pixel_size) / np.array(pixel_size).max()
+    estimate = np.maximum(np.real(np.fft.ifftn(otf * np.fft.fftn(data-background))), epsilon)
+    D = [np.array([0,-1,1]).reshape(s) for s in [[1,1,3],[1,3,1],[3,1,1]]]
+    D = [d*a for d,a in zip(D,alpha)]
+    Dstar = [np.array([-1,1,0]).reshape(s) for s in [[1,1,3],[1,3,1],[3,1,1]]]
+    Dstar = [d*a for d,a in zip(Dstar,alpha)]
+    Hstarf = np.real(np.fft.ifftn(np.conjugate(otf) * np.fft.fftn(data)))
+    HtH = np.conjugate(otf) * otf
+    for _ in range(max_iter):
+        blurred = np.maximum(np.real(np.fft.ifftn(otf * np.fft.fftn(prediction + background))), epsilon)
+        ratio = data / blurred
+        G = [ndimage.convolve(estimate, d, mode='reflect') for d in D]
+        N = np.sqrt(sum([np.square(g) for g in G]) + beta)
+        curv = sum([ndimage.convolve(g/N,d) for g,d in zip(G,Dstar)])
+        estimate = estimate * np.real(np.fft.ifftn(np.conjugate(otf) * np.fft.fft(ratio))) / (1. - regularization * curv)
+    return estimate
 
 # def zernike_polynomial(r,t,coefficients):
 #     """  Evaluate Zernike polynomials.

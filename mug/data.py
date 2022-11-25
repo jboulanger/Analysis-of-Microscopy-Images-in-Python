@@ -76,5 +76,5 @@ def fibers(
         tile = np.exp(-0.5 * np.sum(np.stack(deltas), axis=0))
         img[tuple(b)] += tile
 
-    img = img / img.max()
+    img = (img - img.min()) / (img.max() - img.min())
     return img
