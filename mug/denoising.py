@@ -232,6 +232,7 @@ class DnCNNDenoiser():
         model : the pretrained model
         """
         self.model = model
+        self.model.to(device)
         self.device = device
 
     def __call__(self, x):

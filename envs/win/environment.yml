@@ -15,6 +15,6 @@ dependencies:
   - conda-forge::dask-jobqueue
   - pytorch
   - torchvision
-  - pytorch-cuda=11.6
+  - pytorch-cuda=11.7
   - pip:
     - bm3d

@@ -182,18 +182,18 @@ def deconvolve_richardson_lucy_heavy_ball(data, otf, background=0, iterations=10
         Transactions on Image Processing, vol. 23, no. 2, pp. 848-854, Feb. 2014,
         doi: 10.1109/TIP.2013.2291324.
     """
-    old_estimate = np.clip(np.real(np.fft.ifftn(otf * np.fft.fftn(data - background))), a_min=0, a_max=None)
+    old_estimate = np.maximum(np.real(np.fft.ifftn(otf * np.fft.fftn(data - background))), 0)
     estimate = data
     dkl = np.zeros(iterations)
     for k in range(iterations):
         beta = (k-1.0) / (k+2.0)
         prediction = estimate + beta * (estimate -  old_estimate)
-        blurred = np.maximum(np.real(np.fft.ifftn(otf * np.fft.fftn(prediction + background))),0)
+        blurred = np.maximum(np.real(np.fft.ifftn(otf * np.fft.fftn(prediction + background))), 0)
         ratio = data / blurred
         gradient = 1.0 - np.real(np.fft.ifftn(otf * np.fft.fftn(ratio)))
         old_estimate = estimate
-        estimate = np.clip(prediction - estimate * gradient, a_min=0.1, a_max=None)
-        dkl[k] = np.mean(blurred - data + data * np.log(np.clip(ratio,a_min=1e-6, a_max=None)))
+        estimate = np.maximum(prediction - estimate * gradient, 0)
+        dkl[k] = np.mean(blurred - data + data * np.log(np.maximum(ratio, 0)))
     return estimate, dkl
 
 def deconvolve_wiener(img, otf, snr):
