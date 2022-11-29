@@ -134,19 +134,24 @@ class generalized_anscombe_transform():
     def __str__(self):
         return f"GAT parameters - gain:{self.g0} edc {self.edc}"
 
+
 class ImageFolderDataset(Dataset):
     """Pytorch dataset loading images in a folder"""
-    def __init__(self, path, transform=None):
+    def __init__(self, path, transform=None, length=None):
         super().__init__()
         self.imagelist = [
             io.read_image(x, io.ImageReadMode.GRAY).squeeze()
             for x in glob.glob(path)
         ]
         self.transform = transform
+        if length is None:
+            self.number_of_images = len(self.imagelist)
+        else:
+            self.number_of_images = length
     def __len__(self):
-        return len(self.imagelist)
+        return self.number_of_images
     def __getitem__(self, idx):
-        image = self.imagelist[idx]
+        image = self.imagelist[idx % len(self.imagelist)]
         return self.transform(image)
 
 class DnCNN(nn.Module):

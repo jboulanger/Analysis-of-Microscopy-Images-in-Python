@@ -97,18 +97,70 @@ def train_network(model,optimizer,loss_fn,train_dl,valid_dl,epochs=100,device='c
             optimizer.step()
             train_loss += loss.data.item()
             loss.detach()
+            if scheduler is not None:
+                scheduler.step()
         history['train_loss'].append(train_loss)
         history['train_epoch'].append(epoch)
-        if epoch%10 == 0:
+        if (epoch+1)%10 == 0:
             model.eval()
             valid_loss = 0
             for batch in valid_dl:
                 valid_loss += loss_fn(model(batch[0].to(device)), batch[1].to(device)).detach().item()
             history['valid_loss'].append(valid_loss)
             history['valid_epoch'].append(epoch)
-        if scheduler is not None:
-            scheduler.step()
+
     return history
+
+def lr_finder(model,optimizer,loss_fn,dl,device='cpu',lrmin=1e-6,lrmax=1):
+    """Learning rate finder
+
+    Increases the learning rate using a geometric progression following the
+    paper Cyclical Learning Rates for Training Neural Networks from L. Smith
+    https://arxiv.org/abs/1506.01186
+
+    The increase of the learning rate is implemented using a lambda scheduler.
+
+    Parameter
+    ---------
+    model : network architecture
+    optimizer : optimizer initiallized with lrmin
+    loss_fn : loss function
+    device  : device on which to run the calculations
+    lrmin   : minimum of the range of the learning rate
+    lrmax   : maximum of the range of the learning rate
+
+    Results
+    -------
+    lropt : optimal learning rate found
+    history : dictionnary with loss and learning rate
+
+    """
+    import numpy as np
+    from torch import optim
+    from scipy.ndimage import gaussian_filter1d
+
+    f = lambda  k: (lrmax/lrmin) ** ((k)/(len(dl)-1))
+    scheduler = optim.lr_scheduler.LambdaLR(optimizer, f)
+
+    history = {
+        'loss':[],
+        'learning rate': []
+    }
+
+    for batch in dl:
+        loss = loss_fn(model(batch[0].to(device)), batch[1].to(device))
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+        loss.detach()
+        history['loss'].append(loss.item())
+        history['learning rate'].append(scheduler.get_last_lr()[0])
+        scheduler.step()
+
+    y = np.log(np.array(history['loss']))
+    opt = np.argmin(gaussian_filter1d(y, 2))
+    lropt = history['learning rate'][opt]
+    return lropt, history
 
 
 def psnr(x, y, vmax = 255):
