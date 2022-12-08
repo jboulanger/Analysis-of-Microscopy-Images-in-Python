@@ -1,7 +1,6 @@
 import math
 import numpy as np
 
-
 class otf_generator():
     """Scalar optical transfer function generator for wide-field microscopes
 
@@ -157,7 +156,7 @@ def deconvolve_richardson_lucy(data, otf, background=0, iterations=100):
         ratio = data / blurred
         estimate = estimate * np.real(np.fft.ifftn(otf * np.fft.fftn(ratio)))
         estimate = np.maximum(estimate, epsilon)
-        dkl[k] = np.mean(blurred - data + data * np.log(np.clip(ratio,a_min=1e-6,a_max=None)))
+        dkl[k] = np.mean(blurred - data + data * np.log(np.maximum(ratio,0)))
     return estimate, dkl
 
 def deconvolve_richardson_lucy_heavy_ball(data, otf, background=0, iterations=100):

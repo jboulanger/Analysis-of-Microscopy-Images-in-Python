@@ -8,7 +8,7 @@ see how to define simple analysis workflow from the raw image to quantitative nu
 The objective is not to learn computer science, programing or even the python
 language but to be able to create workflows to analyse microscopy data.
 
-You can lunch the notebooks in binder [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/jboulanger/Analysis-of-Microscopy-Images-in-Python/HEAD) and start interacting with the code without installing anything on your computer.
+You can launch the notebooks in binder [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/jboulanger/Analysis-of-Microscopy-Images-in-Python/HEAD) and start interacting with the code without installing anything on your computer.
 
 
 ## Installation & setup
