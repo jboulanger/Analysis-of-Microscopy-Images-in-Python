@@ -181,18 +181,19 @@ def deconvolve_richardson_lucy_heavy_ball(data, otf, background=0, iterations=10
         Transactions on Image Processing, vol. 23, no. 2, pp. 848-854, Feb. 2014,
         doi: 10.1109/TIP.2013.2291324.
     """
-    old_estimate = np.maximum(np.real(np.fft.ifftn(otf * np.fft.fftn(data - background))), 0)
+    epsilon = 1e-6
+    old_estimate = np.maximum(np.real(np.fft.ifftn(otf * np.fft.fftn(data - background))), epsilon)
     estimate = data
     dkl = np.zeros(iterations)
     for k in range(iterations):
         beta = (k-1.0) / (k+2.0)
         prediction = estimate + beta * (estimate -  old_estimate)
-        blurred = np.maximum(np.real(np.fft.ifftn(otf * np.fft.fftn(prediction + background))), 0)
+        blurred = np.maximum(np.real(np.fft.ifftn(otf * np.fft.fftn(prediction + background))), epsilon)
         ratio = data / blurred
         gradient = 1.0 - np.real(np.fft.ifftn(otf * np.fft.fftn(ratio)))
         old_estimate = estimate
         estimate = np.maximum(prediction - estimate * gradient, 0)
-        dkl[k] = np.mean(blurred - data + data * np.log(np.maximum(ratio, 0)))
+        dkl[k] = np.mean(blurred - data + data * np.log(np.maximum(ratio, epsilon)))
     return estimate, dkl
 
 def deconvolve_wiener(img, otf, snr):
@@ -209,6 +210,7 @@ def deconvolve_wiener(img, otf, snr):
     """
     filter = np.conjugate(otf) / (np.square(np.abs(otf)) + (1./np.square(snr)))
     return np.real(np.fft.ifftn(filter * np.fft.fftn(img)))
+
 
 def deconvolve_dr(img, otf, snr, max_iter=5):
     """Deconvolve the image
@@ -254,9 +256,8 @@ def deconvolve_total_variation(
     estimate   : estimated image
     """
     from scipy import ndimage
-    epsilon = 1e-6
     alpha = np.array(pixel_size) / np.array(pixel_size).max()
-    estimate = np.maximum(np.real(np.fft.ifftn(otf * np.fft.fftn(data-background))), epsilon)
+    estimate = np.real(np.fft.ifftn(otf * np.fft.fftn(data-background)))
     D = [np.array([0,-1,1]).reshape(s) for s in [[1,1,3],[1,3,1],[3,1,1]]]
     D = [d*a for d,a in zip(D,alpha)]
     Dstar = [np.array([-1,1,0]).reshape(s) for s in [[1,1,3],[1,3,1],[3,1,1]]]
@@ -266,8 +267,9 @@ def deconvolve_total_variation(
     for _ in range(max_iter):
         G = [ndimage.convolve(estimate, d, mode='reflect') for d in D]
         N = np.sqrt(sum([np.square(g) for g in G]) + beta)
-        curv = sum([ndimage.convolve(g/N,d) for g,d in zip(G,Dstar)])
-        veloc = np.real(np.fft.ifftn(HtH * np.fft.fftn(estimate))) - Hstarf - regularization * curv
+        curv = sum([ndimage.convolve(g / N, d) for g, d in zip(G, Dstar)])
+        veloc = np.real(np.fft.ifftn(HtH * np.fft.fftn(estimate)))
+        veloc = veloc - Hstarf - regularization * curv
         veloc = veloc / veloc.max()
         estimate = np.maximum(estimate - step_size * veloc, 0)
     return estimate
@@ -277,9 +279,8 @@ def deconvolve_richardson_lucy_total_variation(
         data:np.ndarray,
         otf:np.ndarray,
         background = 0.,
-        pixel_size:np.ndarray = np.ones([3,1]),
         regularization:float = 0.5,
-        max_iter:int = 100,
+        iterations:int = 100,
         beta:float = 0.1) -> np.ndarray:
     """Deconvolve the image with a total variation regularization
     Parameters
@@ -296,20 +297,18 @@ def deconvolve_richardson_lucy_total_variation(
     estimate   : estimated image
     """
     from scipy import ndimage
-    epsilon = 1e-6
-    alpha = np.array(pixel_size) / np.array(pixel_size).max()
-    estimate = np.maximum(np.real(np.fft.ifftn(otf * np.fft.fftn(data-background))), epsilon)
     D = [np.array([0,-1,1]).reshape(s) for s in [[1,1,3],[1,3,1],[3,1,1]]]
-    D = [d*a for d,a in zip(D,alpha)]
     Dstar = [np.array([-1,1,0]).reshape(s) for s in [[1,1,3],[1,3,1],[3,1,1]]]
-    Dstar = [d*a for d,a in zip(Dstar,alpha)]
-    Hstarf = np.real(np.fft.ifftn(np.conjugate(otf) * np.fft.fftn(data)))
-    HtH = np.conjugate(otf) * otf
-    for _ in range(max_iter):
-        blurred = np.maximum(np.real(np.fft.ifftn(otf * np.fft.fftn(prediction + background))), epsilon)
-        ratio = data / blurred
+    epsilon = 1e-6 # a little number
+    estimate = np.real(np.fft.ifftn(otf * np.fft.fftn(data-background)))
+    dkl = np.zeros(iterations)
+    for k in range(iterations):
+        blurred = np.real(np.fft.ifftn(otf * np.fft.fftn(estimate+background)))
+        ratio = data /  np.maximum(blurred, epsilon)
+        estimate = estimate * np.real(np.fft.ifftn(otf * np.fft.fftn(ratio)))
         G = [ndimage.convolve(estimate, d, mode='reflect') for d in D]
         N = np.sqrt(sum([np.square(g) for g in G]) + beta)
-        curv = sum([ndimage.convolve(g/N,d) for g,d in zip(G,Dstar)])
-        estimate = estimate * np.real(np.fft.ifftn(np.conjugate(otf) * np.fft.fft(ratio))) / (1. - regularization * curv)
+        curv = sum([ndimage.convolve(g / N , d) for g,d in zip(G, Dstar)])
+        estimate = estimate / np.maximum(1.- regularization * curv, epsilon)
+        dkl[k] = np.mean(blurred - data + data * np.log(np.maximum(ratio, epsilon)))
     return estimate

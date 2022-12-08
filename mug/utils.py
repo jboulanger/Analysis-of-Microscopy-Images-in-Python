@@ -22,7 +22,7 @@ def show_image_list(images, titles):
     """Display an image list with titles and no axes"""
     _, ax = plt.subplots(1,len(images))
     for k in range(len(images)):
-        ax[k].imshow(images[k])
+        ax[k].imshow(images[k], cmap='gray')
         ax[k].axis('off')
         ax[k].set_title(titles[k])
 
@@ -161,12 +161,6 @@ def lr_finder(model,optimizer,loss_fn,dl,device='cpu',lrmin=1e-6,lrmax=1):
     opt = np.argmin(gaussian_filter1d(y, 2))
     lropt = history['learning rate'][opt]
     return lropt, history
-
-
-def psnr(x, y, vmax = 255):
-    """Peak signal to noise ratio quality metric"""
-    import math
-    return 10 * math.log10(vmax * vmax / np.mean(np.square(x - y)))
 
 
 def generate_wavy_circle_contour(x0,y0,radius,amplitude,smoothness,length):
