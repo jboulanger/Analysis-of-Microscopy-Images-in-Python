@@ -1,5 +1,5 @@
 import numpy as np
-
+import math
 
 def fibers(
         shape,
@@ -78,3 +78,50 @@ def fibers(
 
     img = (img - img.min()) / (img.max() - img.min())
     return img
+
+
+
+def wavy_circle_contour(x0,y0,radius,amplitude,smoothness,length):
+    """Generate a wavy circle contour
+
+    Example
+    -------
+    im = np.zeros((400,300))
+    x, y = wavy_circle_contour(200,150,100,10,0.5,128)
+    rr,cc = polygon(x.ravel(),y.ravel(),im.shape)
+    im[rr,cc] = 1
+    plt.imshow(im)
+    """
+    from numpy.random import default_rng
+    rng = default_rng()
+    t = np.linspace(0,2*math.pi,length).reshape((length,1))
+    f = np.exp(-smoothness*length*np.abs(np.fft.fftfreq(length))).reshape((length,1))
+    circle = radius * np.cos(t) + 1j * radius * np.sin(t)
+    s = circle + x0 + 1j * y0
+    s = s + amplitude * rng.normal(0,0.1,size=(length,1)) * circle
+    s = np.fft.ifftn(f*np.fft.fftn(s))
+    x = np.real(s)
+    y = np.imag(s)
+    return x, y
+
+def nuclei2D(shape, N):
+    from skimage.filters import gaussian
+    from skimage.draw import polygon
+    from numpy.random import default_rng
+    rng = default_rng()
+    labels = np.zeros(shape)
+    for k in range(N):
+        x0 = labels.shape[1] * rng.uniform()
+        y0 = labels.shape[0] * rng.uniform()
+        x, y = wavy_circle_contour(x0,y0,50,5,0.5,64)
+        rr,cc = polygon(y.ravel(),x.ravel(),labels.shape)
+        if np.all(labels[rr,cc]==0):
+            labels[rr,cc] = k+1
+
+    fx,fy = np.meshgrid(np.fft.fftfreq(labels.shape[1]),np.fft.fftfreq(labels.shape[0]))
+    g = 1/(1+10*np.sqrt((np.power(fx,2)+np.power(fy,2))))
+    texture = np.real(np.fft.ifftn(g*np.fft.fftn(rng.normal(size=labels.shape))))
+    texture = (texture - texture.min()) / (texture.max()-texture.min())
+    texture = np.fmax(texture - 0.3, 0)
+    im = gaussian((labels>0) * texture, 1)
+    return im, labels

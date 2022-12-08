@@ -44,6 +44,21 @@ def benchmark(method, imgpath, blind=False, noise_levels=range(5,30,5)):
             })
     return pd.DataFrame.from_records(results)
 
+
+def test_image(method, image, blind=False, noise_level=10):
+    from skimage import metrics
+    from . import utils
+    noisy = image + np.random.normal(0,10, size=image.shape)
+    if blind:
+        estimate = method(noisy).astype(float)
+    else:
+        estimate = method(noisy, noise_level).astype(float)
+    psnr0 = metrics.peak_signal_noise_ratio(image, noisy, data_range=255)
+    psnr1 = metrics.peak_signal_noise_ratio(image, estimate, data_range=255)
+    utils.show_image_list(
+        [image,noisy,estimate],
+        ['Image',f'Noisy {psnr0:.2f}dB', f'Denoised {psnr1:.2f}dB'])
+
 def pseudoresiduals(data:np.ndarray):
     """Scaled pseudo residuals
     Parameter
@@ -235,6 +250,9 @@ class DnCNNDenoiser():
         self.model.to(device)
         self.device = device
 
+    def __str__(self):
+        return "DnCNN"
+
     def __call__(self, x):
         """Apply the denoiser to a 2D numpy array
         Parameters
@@ -390,9 +408,10 @@ class DRUNETDenoiser():
         ----------
         model : the pretrained model
         """
-        self.model = model
+        self.model = model.to(device)
         self.device = device
-
+    def __str__(self):
+        return "DRUNET"
     def __call__(self, x, noise_std):
         """Apply the denoiser to a 2D numpy array
         Parameters
@@ -404,7 +423,7 @@ class DRUNETDenoiser():
         the denoised input
         """
         with torch.no_grad():
-            z = torch.from_numpy(x).float().reshape([1,1,*x.shape]).to(self.device)
+            z = torch.from_numpy(x).float().reshape([1,1,*x.shape])
             noise_map = noise_std * torch.ones(z.shape)
-            z = torch.cat((z , noise_map), 1)
+            z = torch.cat((z , noise_map), 1).to(self.device)
             return self.model(z).cpu().numpy().reshape(x.shape)
