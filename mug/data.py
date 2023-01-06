@@ -1,5 +1,6 @@
 import numpy as np
 import math
+from numba import jit
 
 def fibers(
         shape,
@@ -125,3 +126,100 @@ def nuclei2D(shape, N):
     texture = np.fmax(texture - 0.3, 0)
     im = gaussian((labels>0) * texture, 1)
     return im, labels
+
+
+@jit(nopython=True)
+def reflect_range(n):
+    """Range iterator returning (i,i-1,i+1) with reflective boundary condition"""
+    for i in range(n):
+        if i == 0:
+            ia = 0
+            ib = i + 1
+        elif i == n - 1:
+            ia = i - 1
+            ib = n - 1
+        else :
+            ia = i - 1
+            ib = i + 1
+        yield (i,ia,ib)
+
+
+@jit(nopython=True,parallel=True)
+def turing_pattern_step_2d(f,dt,a,b,q,r,D,mask):
+    """ Update step for Turing pattern generation in 2D
+    """
+    df = np.zeros_like(f)
+    for i,ia,ib in reflect_range(f.shape[1]):
+        for j,ja,jb in reflect_range(f.shape[2]):
+            u = f[0,i,j]
+            v = f[1,i,j]
+            du = -4. * u + f[0,i,ja] + f[0,i,jb] + f[0,ia,j] + f[0,ib,j]
+            dv = -4. * v + f[1,i,ja] + f[1,i,jb] + f[1,ia,j] + f[1,ib,j]
+            mk = 0.01 * ( 1. - mask[i,j])
+            df[0,i,j] = D*du + a * u * (1 - q * v * v) + v * (1. - r * u) - mk
+            df[1,i,j] =   dv + v * (b + a * q * u * v) + u * (-a + r * v)
+    df = df / df.ptp()
+    return f + dt * df
+
+
+@jit(nopython=True,parallel=True)
+def turing_pattern_step_3d(f,dt,a,b,q,r,D,mask):
+    """ Update step for Turing pattern generation in 3D
+    """
+    df = np.zeros_like(f)
+    for i,ia,ib in reflect_range(f.shape[1]):
+        for j,ja,jb in reflect_range(f.shape[2]):
+            for k,ka,kb in reflect_range(f.shape[3]):
+                u = f[0,i,j,k]
+                v = f[1,i,j,k]
+                du = -6. * u + f[0,i,ja,k] + f[0,i,jb,k] + f[0,ia,j,k] + f[0,ib,j,k] + f[0,i,j,ka] + f[0,i,j,kb]
+                dv = -6. * v + f[1,i,ja,k] + f[1,i,jb,k] + f[1,ia,j,k] + f[1,ib,j,k] + f[1,i,j,ka] + f[1,i,j,kb]
+                mk = 0.01 * ( 1. - mask[i,j,k])
+                df[0,i,j,k] = D * du + a * u * (1 - q * v * v) + v * (1. - r * u) - mk
+                df[1,i,j,k] = dv + v * (b + a * q * u * v) + u * (-a + r * v) - mk
+    df = df / df.ptp()
+    return f + dt * df
+
+def turing_pattern(mask:np.ndarray,niter:int,dt:float,a:float,b:float,q:float,r:float,D:float):
+    """ Generate a Turing pattern usign a reaction diffusion simulation
+
+    Parameters
+    ----------
+    mask: image support as a 2D/3D ndarray
+    niter : number of iterations (positive integer)
+    dt : time step (positive)
+    a : float value
+    b : float value
+    q : float value
+    r : float value
+    D : Diffusion parameter for field u
+
+    Result
+    ------
+    f : simulated field (u,v)
+
+    du/dt = D \nabla u + a u (1 - q v^2) + v (1 - ru)
+    dv/dt = \nabla v v ( b + a q u v) + u (-a + rv)
+
+    http://www.dna.caltech.edu/courses/cs191/paperscs191/turing.pdf
+    """
+    from scipy.ndimage import gaussian_filter
+    from numpy.random import default_rng
+    rng = default_rng()
+    f = rng.standard_normal([2,*mask.shape], dtype=float)
+    f = np.stack([gaussian_filter(fk,1,mode='reflect') for fk in f])
+    f = (f - f.min()) / (f.ptp())
+    mask = mask.astype(float)
+    if mask.ptp() > 0:
+        mask = gaussian_filter(mask, 2)
+        mask = (mask - mask.min()) / (mask.ptp())
+        f = f * mask
+    if len(mask.shape)==2:
+        for _ in range(niter):
+            f = turing_pattern_step_2d(f,dt,a,b,q,r,D,mask)
+    else:
+        for _ in range(niter):
+            f = turing_pattern_step_3d(f,dt,a,b,q,r,D,mask)
+    f[0] = (f[0] - f[0].min()) / (f[0].ptp())
+    f[1] = (f[1] - f[1].min()) / (f[1].ptp())
+    return f
