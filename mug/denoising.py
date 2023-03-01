@@ -305,7 +305,7 @@ class DRUNETAugmenter(object):
             noise_std = random.uniform(*self.noise_level)
         else:
             noise_std = self.noise_level
-        residuals = noise_std * torch.randn(img.shape)
+
         noisy = img + noise_std * torch.randn(img.shape)
         noise_map = noise_std * torch.ones(noisy.shape)
         noisy = torch.cat((noisy , noise_map), 0)
@@ -410,8 +410,10 @@ class DRUNETDenoiser():
         """
         self.model = model.to(device)
         self.device = device
+
     def __str__(self):
         return "DRUNET"
+
     def __call__(self, x, noise_std):
         """Apply the denoiser to a 2D numpy array
         Parameters

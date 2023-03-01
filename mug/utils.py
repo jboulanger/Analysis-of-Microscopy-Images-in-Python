@@ -1,7 +1,11 @@
-import scipy.ndimage
-import numpy as np
-import matplotlib.pyplot as plt
 import math
+import numpy as np
+import scipy.ndimage
+import matplotlib.pyplot as plt
+import matplotlib as mpl
+from matplotlib.colors import LinearSegmentedColormap
+from PIL import Image
+
 
 def download_and_unzip(url, extract_to='.'):
     """Download and unzip an zip file
@@ -31,7 +35,7 @@ def mip3d(image):
     """Compute 3 maximum intensity projection and make a montage
     Parameters
     ----------
-    image : image (3d)
+    image : image (3d) [Z,Y.X]
     Results
     -------
     a all projections arranged in as a single 2d image
@@ -50,7 +54,7 @@ def slice3d(image):
     """Compute a slice of 3D image
     Parameters
     ----------
-    image : image (3d)
+    image : image (3d) [Z,Y.X]
     Results
     -------
     all slices arranged in a single 2d image
@@ -63,6 +67,55 @@ def slice3d(image):
         (np.concatenate((xy,xz),0), np.concatenate((yz,zz),0)),
         1
     )
+
+
+# Register extra colormaps
+for c in ['red', 'green', 'blue']:
+    if c not in mpl.colormaps:
+        mpl.colormaps.register(cmap=LinearSegmentedColormap.from_list(c, ['black',c]))
+if 'gray' not in mpl.colormaps:
+        mpl.colormaps.register(cmap=LinearSegmentedColormap.from_list('gray', ['black','white']))
+
+
+def normalize_contrast(array:np.ndarray, saturation=0):
+    array = array.astype(float)
+    try:
+        _ = iter(saturation)
+    except TypeError:
+        amin, amax = np.percentile(array, [saturation, 100.0-saturation])
+    else:
+         amin, amax = np.percentile(array, saturation)
+
+    if amax != amin:
+        return np.clip((array - amin) / (amax - amin),0,1)
+    else:
+        return np.clip(array,0,1)
+
+def cmap_to_colormap(name):
+    """Convert a colormap name to a """
+    try:
+        _ = iter(name)
+    except TypeError:
+        return mpl.colormaps[name]
+    else:
+        return [mpl.colormaps[x] for x in name]
+
+
+def to_pil(array:np.ndarray, cmap, saturation=0) -> Image:
+    """Convert an array [C,X,Y] to a PIL RGB image"""
+    colors = cmap_to_colormap(cmap)
+    if len(array.shape) == 2:
+        img = cmap(normalize_contrast(array, saturation))
+    else:
+        img = sum([
+            f(normalize_contrast(x, saturation)) for x,f in zip(array, colors)
+        ])
+    return Image.fromarray((255*img).astype(np.uint8))
+
+
+def imshow(img,cmap, saturation=0):
+    plt.imshow(to_pil(img, cmap, saturation))
+    plt.axis('off')
 
 
 def power_spectrum_density(x, applylog=True):
@@ -110,6 +163,7 @@ def train_network(model,optimizer,loss_fn,train_dl,valid_dl,epochs=100,device='c
             history['valid_epoch'].append(epoch)
 
     return history
+
 
 def lr_finder(model,optimizer,loss_fn,dl,device='cpu',lrmin=1e-6,lrmax=1):
     """Learning rate finder
@@ -204,6 +258,7 @@ def generate_nuclei2D_image(shape):
     #plt.imshow(im*texture,cmap='gray')
     #plt.imsave("/home/jeromeb/Desktop/nuk.png",im,cmap="gray")
 
+
 def generate_test_image(shape,N=10,L=100,smooth=10):
     """
     Generate a test image with fibers
@@ -253,3 +308,4 @@ def estimate_awgn_std(data:np.array):
     # comute MAD / scipy.stats.norm.ppf(3/4)
     sigma = 1.482602218 * np.median(np.abs(flt-np.median(flt)))
     return sigma
+

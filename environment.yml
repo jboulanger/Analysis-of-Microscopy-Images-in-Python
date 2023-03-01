@@ -6,12 +6,14 @@ channels:
 dependencies:
   - ipython
   - ipykernel
+  - ipywidgets
   - pip
   - matplotlib
   - pandas
   - scikit-image
   - scikit-learn
   - seaborn
+  - numba
   - conda-forge::dask
   - conda-forge::dask-jobqueue
   - pytorch::pytorch
