@@ -2,41 +2,38 @@
 
 # Processing and analysis of microscopy images in python
 
-These material aims at gathering tips to analysis of microscopy images. We'll
-see how to define simple analysis workflow from the raw image to quantitative number.
+These material aims at gathering tips to analysis of microscopy images. We'll see how to define simple analysis workflow from the raw image to quantitative number.
 
-The objective is not to learn computer science, programing or even the python
-language but to be able to create workflows to analyse microscopy data.
+The objective is to be able to create workflows to analyse microscopy data.
 
-You can launch the notebooks in binder [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/jboulanger/Analysis-of-Microscopy-Images-in-Python/HEAD) and start interacting with the code without installing anything on your computer.
+You can launch the notebooks in binder  and start interacting with the code without installing anything on your computer.
+
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/jboulanger/Analysis-of-Microscopy-Images-in-Python/HEAD)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/jboulanger/Analysis-of-Microscopy-Images-in-Python/)
+
 
 
 ## Installation & setup
-These steps are for illustrative purpose only and aimed at people not familiar with coding in python. For python, we can use a minimal version of miniconda which is a package manager for precompiled modules. For editing text, we use visual studio code.
+To be able to run the code on your own compute, we can follow these steps:
 
-- Install visual studio code https://code.visualstudio.com/download
-- Activate python extensions in visual code ([])
-- Install miniconda3 https://docs.conda.io/en/latest/miniconda.html
-- Create an environement
-	1. Install modules manually one by one (see notebooks) and install needed packages one by one. In the miniconda3 prompt or in visual code, opening a command prompt:
-        ```
-        conda create --name imageanalysis
-        conda activate imageanalsyis
-        ```
-        and install the jupyter kernel
-        ```
-        conda install ipykernel
-        python -m ipykernel install --user --name imageanalysis
-        ```
-	2. Or create the environment with all the necessary module typing in a terminal
-        ```
-        conda env create -f environment.yml
-        ```
-	Note that to export the current environment to an yml file use: ```conda env export > environment.yml```
+1. Install [visual code](https://code.visualstudio.com/download)
+2. Activate [extensions](https://code.visualstudio.com/docs/languages/python) in visual code for
+[python](https://marketplace.visualstudio.com/items?itemName=ms-python.python) and
+[notebooks](https://marketplace.visualstudio.com/items?itemName=ms-toolsai.jupyter)
+3. Install [miniconda3](https://docs.conda.io/en/latest/miniconda.html)
+4. Download the code using git or directly [here](https://github.com/jboulanger/Analysis-of-Microscopy-Images-in-Python/archive/refs/heads/main.zip) and unzip it
+5. Open visual code and open the folder Analysis-of-Microscopy-Images-in-Python in visual code
+5. In visual code open a new terminal (on windows make sure the terminal is cmd and not PS). Create the environement installing necessary packages:
+```
+conda env create -f envs/linux/environment.yml
+```
+6. Register the jupyter kernel
+```
+conda activate imaging
+python -m ipykernel install --user --name imaging
+```
+7. Open a notebook in the nbs folder, on the top right of the notebook you should be able to change the kernel from `Python` to `imaging`.
 
-- Download the code using git or directly [here](https://github.com/jboulanger/Analysis-of-Microscopy-Images-in-Python/archive/refs/heads/main.zip)
-
-- We can run the examples in a jupyter notebook in the browser as well. Open the anaconda prompt, go to the directory where the notebooks are saved by typing  ```cd path_to_the_folder```  and then launch the notebook with ```jupyter notebook``` .
 
 ## Content
 The notebooks in the example folder try to cover various aspects of image analysis encountered in optical/fluorescence microsopy.

@@ -4,6 +4,7 @@ channels:
   - conda-forge
   - defaults
 dependencies:
+  - python=3.9
   - ipython
   - ipykernel
   - ipywidgets
@@ -22,3 +23,5 @@ dependencies:
   - pip:
     - bm3d
     - napari[all]
+    - cellpose[gui]
+    - nd2
