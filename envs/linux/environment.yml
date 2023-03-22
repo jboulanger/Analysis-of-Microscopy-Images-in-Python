@@ -6,9 +6,10 @@ channels:
   - defaults
 dependencies:
   - python=3.9
+  - pip
   - conda-forge::nodejs
   - conda-forge::jupyterlab
-  - pip
+  - conda-forge::ipyvolume
   - pytorch::pytorch
   - pytorch::pytorch-cuda=11.7
   - pytorch::torchvision
@@ -20,8 +21,11 @@ dependencies:
   - numba
   - conda-forge::dask
   - conda-forge::dask-jobqueue
+  - openpyxl
   - pip:
     - bm3d
     - napari[all]
     - cellpose[gui]
     - nd2
+    - ipywidgets==7.7.1
+    - ipyfilechooser

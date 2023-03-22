@@ -1,0 +1,23 @@
+name: imaging
+channels:
+  - pytorch-nightly
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.9
+  - pip
+  - pytorch-nightly::pytorch
+  - pytorch-nightly::torchvision
+  - ipykernel 
+  - matplotlib
+  - pandas
+  - scikit-image
+  - scikit-learn
+  - seaborn
+  - numba
+  - openpyxl
+  - napari
+  - cellpose[gui]
+  - pip:
+    - bm3d
+    - nd2

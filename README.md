@@ -23,16 +23,17 @@ To be able to run the code on your own compute, we can follow these steps:
 3. Install [miniconda3](https://docs.conda.io/en/latest/miniconda.html)
 4. Download the code using git or directly [here](https://github.com/jboulanger/Analysis-of-Microscopy-Images-in-Python/archive/refs/heads/main.zip) and unzip it
 5. Open visual code and open the folder Analysis-of-Microscopy-Images-in-Python in visual code
-5. In visual code open a new terminal (on windows make sure the terminal is cmd and not PS). Create the environement installing necessary packages:
+6. In visual code open a new terminal (on windows make sure the terminal is cmd and not PS). Create the environement installing necessary packages:
 ```
 conda env create -f envs/linux/environment.yml
 ```
-6. Register the jupyter kernel
+7. Register the jupyter kernel
 ```
 conda activate imaging
 python -m ipykernel install --user --name imaging
 ```
-7. Open a notebook in the nbs folder, on the top right of the notebook you should be able to change the kernel from `Python` to `imaging`.
+8. Open a notebook in the nbs folder, on the top right of the notebook you should be able to change the kernel from `Python` to `imaging`.
+
 
 
 ## Content

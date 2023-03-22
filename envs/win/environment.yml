@@ -6,6 +6,7 @@ channels:
   - defaults
 dependencies:
   - python=3.9
+  - pip
   - ipykernel
   - matplotlib
   - pandas
@@ -16,7 +17,11 @@ dependencies:
   - pytorch
   - torchvision
   - pytorch-cuda=11.7
+  - openpyxl
+  - conda-forge::jupyterlab
   - pip:
     - bm3d
     - cellpose
     - nd2
+    - ipywidgets==7.7.1
+    - ipyfilechooser
