@@ -134,11 +134,12 @@ def power_spectrum_density(x, applylog=True):
         return psd
 
 
-def train_network(model,optimizer,loss_fn,train_dl,valid_dl,epochs=100,device='cpu',scheduler=None):
+def train_network(model, optimizer, loss_fn, train_dl, valid_dl, epochs=100, device='cpu', scheduler=None):
     """Training loops"""
     history = {
         'train_loss':[], 'train_epoch':[],
-        'valid_loss':[], 'valid_epoch':[]
+        'valid_loss':[], 'valid_epoch':[],
+        'learning_rate': []
     }
     for epoch in range(epochs):
         model.train()
@@ -154,6 +155,7 @@ def train_network(model,optimizer,loss_fn,train_dl,valid_dl,epochs=100,device='c
                 scheduler.step()
         history['train_loss'].append(train_loss)
         history['train_epoch'].append(epoch)
+        history['learning_rate'].append(scheduler.get_last_lr()[0])
         if (epoch+1)%10 == 0:
             model.eval()
             valid_loss = 0
@@ -161,6 +163,7 @@ def train_network(model,optimizer,loss_fn,train_dl,valid_dl,epochs=100,device='c
                 valid_loss += loss_fn(model(batch[0].to(device)), batch[1].to(device)).detach().item()
             history['valid_loss'].append(valid_loss)
             history['valid_epoch'].append(epoch)
+
 
     return history
 

@@ -45,14 +45,14 @@ def benchmark(method, imgpath, blind=False, noise_levels=range(5,30,5)):
     return pd.DataFrame.from_records(results)
 
 
-def test_image(method, image, blind=False, noise_level=10):
+def test_image(method, image, blind=False, noise_std=10):
     from skimage import metrics
     from . import utils
-    noisy = image + np.random.normal(0,10, size=image.shape)
+    noisy = image + np.random.normal(0, noise_std, size=image.shape)
     if blind:
         estimate = method(noisy).astype(float)
     else:
-        estimate = method(noisy, noise_level).astype(float)
+        estimate = method(noisy, noise_std).astype(float)
     psnr0 = metrics.peak_signal_noise_ratio(image, noisy, data_range=255)
     psnr1 = metrics.peak_signal_noise_ratio(image, estimate, data_range=255)
     utils.show_image_list(
@@ -396,6 +396,10 @@ class DRUNET(UNet2D):
     """DRUNET model"""
     def __init__(self):
         super(DRUNET, self).__init__(ResBlock2d, in_channels=2, nfeatures=[16,32,64,128])
+
+    def save(self, path):
+        """Save the weights in a file"""
+        torch.save(self.state_dict(), path)
 
 
 class DRUNETDenoiser():
