@@ -9,7 +9,6 @@ dependencies:
   - pip
   - conda-forge::nodejs
   - conda-forge::jupyterlab
-  - conda-forge::ipyvolume
   - pytorch::pytorch
   - pytorch::pytorch-cuda=11.7
   - pytorch::torchvision
@@ -27,5 +26,3 @@ dependencies:
     - napari[all]
     - cellpose[gui]
     - nd2
-    - ipywidgets==7.7.1
-    - ipyfilechooser
