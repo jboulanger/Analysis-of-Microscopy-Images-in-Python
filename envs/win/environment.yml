@@ -13,12 +13,11 @@ dependencies:
   - seaborn
   - scikit-image
   - conda-forge::dask
-  - conda-forge::dask-jobqueue
   - pytorch
   - torchvision
   - pytorch-cuda=11.7
   - openpyxl
-  - conda-forge::jupyterlab
+  - jupyterlab
   - pip:
     - bm3d
     - cellpose

@@ -39,7 +39,7 @@ def benchmark(method, imgpath, blind=False, noise_levels=range(5,30,5)):
                 'noise level': noise_std,
                 'image name': pathlib.Path(fname).stem,
                 'psnr': metrics.peak_signal_noise_ratio(img, denoised, data_range=255),
-                'ssim': metrics.structural_similarity(img, denoised),
+                'ssim': metrics.structural_similarity(img, denoised, data_range=255),
                 'time': t1 - t0
             })
     return pd.DataFrame.from_records(results)
